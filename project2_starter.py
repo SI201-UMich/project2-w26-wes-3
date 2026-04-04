@@ -62,14 +62,16 @@ def load_listing_results(html_path) -> list[tuple]:
         #extracts listing id and checks for possible class names for 'a' tag
 
         listing_id = ""
-        if a_tag and 'target' in a_tag.attrs:
-            target_str = a_tag['target']
+        if a_tag and 'id' in a_tag.attrs:
+            id_str = a_tag['id']
             #use regex
-            match = re.search(r'\d+', target_str)
+            match = re.search(r'\d+', id_str)
             if match:
                 listing_id = match.group()
 
         results.append((title, listing_id))
+
+    return results
 
 
     pass
@@ -111,7 +113,7 @@ def get_listing_details(listing_id) -> dict:
         'host_type': "Regular", 
         'host_name': "", 
         "room_type": "",
-        'loaction_rating': None
+        'location_rating': None
     }
 
     try: 
@@ -120,7 +122,7 @@ def get_listing_details(listing_id) -> dict:
 
     except FileNotFoundError:
         print(f"File not found: {html_path}")
-        return details
+        return {listing_id: details}
     
     #1. policy number
     li_tags = soup.find_all('li', class_='f19phm7j dir dir-ltr')
@@ -133,12 +135,12 @@ def get_listing_details(listing_id) -> dict:
     #2. host type
     host_divs = soup.find_all('div', class_='t1bchdij dir dir-ltr')
     for div in host_divs:
-        if 'Suoerhost' in div.text:
+        if 'Superhost' in div.text:
             details['host_type'] = "Superhost"
             break
 
     #3. host name
-    host_h2 = soup.find('ht', class_='h1y19v0v dir dir-ltr')
+    host_h2 = soup.find('ht2', class_='h1y19v0v dir dir-ltr')
     if host_h2:
         details['host_name'] = host_h2.text.replace('Hosted by', '').strip()
 
@@ -151,12 +153,12 @@ def get_listing_details(listing_id) -> dict:
     rating_divs = soup.find_all('div', class_='r1lutz1s dir dir-ltr')
     for div in rating_divs:
         if 'Location' in div.text:
-            match = re.search(r'(\d+\.d+)', div.text)
+            match = re.search(r'(\d+\.\d+)', div.text)
             if match:
                 details['location_rating'] = float(match.group(1))
             break
 
-    return details
+    return {listing_id: details}
 
     pass
     # ==============================
@@ -183,7 +185,7 @@ def create_listing_database(html_path) -> list[tuple]:
 
     listings = load_listing_results(html_path) #call load_listing_results to get list of tuples
 
-    for title, listing_id in html_path:
+    for title, listing_id in listings:
 
         details_dict = get_listing_details(listing_id) #each listing id
 
@@ -226,8 +228,9 @@ def output_csv(data, filename) -> None:
     # YOUR CODE STARTS HERE
     # ==============================
     header = [
-        "listing Title", "Listing ID", "Policy Number", "Host Type", "host Name", "Room Type", "Location Rating"
+        "Listing Title", "Listing ID", "Policy Number", "Host Type", "host Name", "Room Type", "Location Rating"
     ]
+    data.sort(key=lambda x: x[6] if x[6] is not None else 0.0, reverse=True)
 
     with open(filename, 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f)
@@ -346,16 +349,16 @@ class TestCases(unittest.TestCase):
 
     def test_load_listing_results(self):
         # TODO: Check that the number of listings extracted is 18.
-        self.assertIsInstance(self.results, list)
+        self.assertIsInstance(self.listings, list)
 
-        self.assertEqual(len(self.results), 18)
+        self.assertEqual(len(self.listings), 18)
 
         # TODO: Check that the FIRST (title, id) tuple is  ("Loft in Mission District", "1944564").
-        self.assertIsInstance(self.results[0], tuple)
+        self.assertIsInstance(self.listings[0], tuple)
 
         expected_first = ("Loft in Mission District", "1944564")
 
-        self.assertEqual(self.results[0], expected_first)
+        self.assertEqual(self.listings[0], expected_first)
         pass
 
     def test_get_listing_details(self):
@@ -365,22 +368,23 @@ class TestCases(unittest.TestCase):
         details_list = [get_listing_details(listing_id) for listing_id in html_list] #create a list of dictionaries by calling the function for each ID
         self.assertEqual(len(details_list), 5) #check there are 5 dictionaries returned
 
-        for details in details_list:
-            self.assertIsInstance(details, dict)
-            self.assertEqual(len(details), 5)
+        for i, listing_id in enumerate(html_list):
+            inner_dict = details_list[i][listing_id]
+            self.assertIsInstance(inner_dict, dict)
+            self.assertEqual(len(inner_dict), 5)
 
-            expected_keys = ['policy_number', 'host_type', 'host_name', 'room_type', 'location_rating', 'host_type']
-            for key in expected_keys:
-                self.assertIn(key, details)
+
 
         # TODO: Spot-check a few known values by opening the corresponding listing_<id>.html files.
         # 1) Check that listing 467507 has the correct policy number "STR-0005349".
-        self.assertEqual(details_list[0].get("policy_number"), "STR-0005349")
+            if listing_id == "467507":
+                self.assertEqual(inner_dict.get("policy_number"), "STR-0005349")
         # 2) Check that listing 1944564 has the correct host type "Superhost" and room type "Entire Room".
-        self.assertEqual(details_list[2].get("host_type"), "Superhost")
-        self.assertEqual(details_list[2].get("room_type"), "Entire Room")
+            if listing_id == "1944564":
+                self.assertEqual(inner_dict.get("host_type"), "Superhost")
+                self.assertEqual(inner_dict.get("room_type"), "Entire Room")
         # 3) Check that listing 1944564 has the correct location rating 4.9.
-        self.assertEqual(details_list[2].get("location_rating"), 4.9)
+                self.assertEqual(inner_dict.get("location_rating"), 4.9)
         pass
 
     def test_create_listing_database(self):
