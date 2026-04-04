@@ -63,12 +63,11 @@ def load_listing_results(html_path) -> list[tuple]:
 
         listing_id = ""
         if a_tag:
-            id_source = a_tag.get('id') or a_tag.get('href')
-            if id_source:
-                match = re.search(r'\d+', id_source)
-                if match:
-                    listing_id = match.group
-
+            id_source = a_tag.get('id') or a_tag.get('href, ""')
+            match = re.search(r'\d+', id_source)
+            if match:
+                listing_id = match.group
+        
         results.append((title, listing_id))
 
     return results
@@ -121,7 +120,6 @@ def get_listing_details(listing_id) -> dict:
             soup = BeautifulSoup(file, 'html.parser')
 
     except FileNotFoundError:
-        print(f"File not found: {html_path}")
         return {listing_id: details}
     
     #1. policy number
