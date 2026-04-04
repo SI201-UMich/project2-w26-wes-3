@@ -63,7 +63,7 @@ def load_listing_results(html_path) -> list[tuple]:
 
         listing_id = ""
         if a_tag:
-            id_source = a_tag.get('id') or a_tag.get('href, ""')
+            id_source = a_tag.get('id') or a_tag.get('href', "")
             match = re.search(r'\d+', id_source)
             if match:
                 listing_id = match.group
@@ -264,7 +264,7 @@ def avg_location_rating_by_room_type(data) -> dict:
         room_type = row[5]
         location_rating = row[6]
 
-        if location_rating is not None:
+        if location_rating is not None and location_rating != 0.0:
             if room_type not in ratings_by_type:
                 ratings_by_type[room_type] = []
             ratings_by_type[room_type].append(location_rating)
