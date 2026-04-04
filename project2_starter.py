@@ -179,25 +179,27 @@ def create_listing_database(html_path) -> list[tuple]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    detailed_data = []
+    database = [] #initialize empty list
+
+    listings = load_listing_results(html_path) #call load_listing_results to get list of tuples
 
     for title, listing_id in html_path:
-        details = get_listing_details(listing_id)
-        #get the detailed dictionary for listing
 
-    detailed_tuple = (
-        title,
-        listing_id,
-        details.get('policy_number'),
-        details.get('host_type'),
-        details.get('host_name'),
-        details.get('room_typoe'),
-        details.get('location_rating')
-    )
-    #constructing tuple in exact order
-    detailed_data.append(detailed_tuple)
+        details_dict = get_listing_details(listing_id) #each listing id
 
-    return detailed_data
+        info = details_dict[listing_id] #extracting inner dictionary
+
+        policy = info.get("policy_number")
+        host_type = info.get("host_type")
+        host_name = info.get("host_name")
+        room_type = info.get("room_type")
+        rating = info.get("location_rating")
+        #extracting specific fields
+
+        full_tuple = (title, listing_id, policy, host_type, host_name, room_type, rating)
+        database.append(full_tuple)
+
+    return database
 
 
     pass
