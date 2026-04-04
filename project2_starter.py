@@ -293,7 +293,21 @@ def validate_policy_numbers(data) -> list[str]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-  
+    invalid_ids = []
+
+    #regex pattern: "STR-" followed by 7 digits
+    valid_pattern = r"^STR-\d{7}$"
+
+    for row in data:
+        listing_id = row[1]
+        policy = row[2]
+
+        #checking against standard allowed strings
+        if policy not in ["Exempt", "Pending"]:
+            if not re.match(valid_pattern, policy):
+                invalid_ids.append(listing_id)
+
+    return invalid_ids
     pass
     # ==============================
     # YOUR CODE ENDS HERE
