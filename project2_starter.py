@@ -1,7 +1,7 @@
 # SI 201 HW4 (Library Checkout System)
 # Your name: Wesley Chan
-# Your student id: 
-# Your email:
+# Your student id: 78133291
+# Your email: wesleycc@umich.edu
 # Who or what you worked with on this homework (including generative AI like ChatGPT):
 # If you worked with generative AI also add a statement for how you used it.
 # e.g.:
@@ -40,6 +40,9 @@ def load_listing_results(html_path) -> list[tuple]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
+
+    #used GenAI to ask me leading questions, hints, as well as explanation of code for this part
+
     results = []
 
     with open(html_path, 'r', encoding='utf-8') as file:
@@ -98,6 +101,9 @@ def get_listing_details(listing_id) -> dict:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
+
+    #used GenAI to ask me leading questions, hints, as well as explanation of code for this part
+
     html_path = f"listing_{listing_id}.html"
 
     details = {
@@ -249,6 +255,23 @@ def avg_location_rating_by_room_type(data) -> dict:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
+    ratings_by_type = {}
+
+    for row in data:
+        room_type = row[5]
+        location_rating = row[6]
+
+        if location_rating is not None:
+            if room_type not in ratings_by_type:
+                ratings_by_type[room_type] = []
+            ratings_by_type[room_type].append(location_rating)
+
+    avg_ratings = {}
+    for room_type, ratings in ratings_by_type.items():
+        avg = sum(ratings) / len(ratings)
+        avg_ratings[room_type] = round(avg, 1)
+
+    return avg_ratings
     pass
     # ==============================
     # YOUR CODE ENDS HERE
