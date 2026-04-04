@@ -1,6 +1,6 @@
 # SI 201 HW4 (Library Checkout System)
-# Your name:
-# Your student id:
+# Your name: Wesley Chan
+# Your student id: 
 # Your email:
 # Who or what you worked with on this homework (including generative AI like ChatGPT):
 # If you worked with generative AI also add a statement for how you used it.
@@ -33,7 +33,6 @@ def load_listing_results(html_path) -> list[tuple]:
 
     Args:
         html_path (str): The path to the HTML file containing the search results
-
     Returns:
         list[tuple]: A list of tuples containing (listing_title, listing_id)
     """
@@ -41,6 +40,35 @@ def load_listing_results(html_path) -> list[tuple]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
+    results = []
+
+    with open(html_path, 'r', encoding='utf-8') as file:
+        soup = BeautifulSoup(file, 'html.parser')
+
+    listings = soup.find_all('div', class_='c1l1h97y dir dir-ltr')
+    #finds all llistings on page
+
+    for listing in listings: 
+        title_tag = listing.find('div', class_='t1jojoys dir dir-ltr')
+        title = title_tag.text.strip() if title_tag else ""
+        #extracts listing title
+
+        a_tag = listing.find('a', class_='bn2bl2p dir dir-ltr') 
+        if not a_tag:
+            a_tag = listing.find('a', class_='l1ovpqvx c1k1n11t dir dir-ltr')
+        #extracts listing id and checks for possible class names for 'a' tag
+
+        listing_id = ""
+        if a_tag and 'target' in a_tag.attrs:
+            target_str = a_tag['target']
+            #use regex
+            match = re.search(r'\d+', target_str)
+            if match:
+                listing_id = match.group()
+
+        results.append((title, listing_id))
+
+
     pass
     # ==============================
     # YOUR CODE ENDS HERE
