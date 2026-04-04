@@ -98,6 +98,60 @@ def get_listing_details(listing_id) -> dict:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
+    html_path = f"listing_{listing_id}.html"
+
+    details = {
+        'policy_number': "Exempt",
+        'host_type': "Regular", 
+        'host_name': "", 
+        "room_type": "",
+        'loaction_rating': None
+    }
+
+    try: 
+        with open(html_path, 'r', encoding='utf-8') as file:
+            soup = BeautifulSoup(file, 'html.parser')
+
+    except FileNotFoundError:
+        print(f"File not found: {html_path}")
+        return details
+    
+    #1. policy number
+    li_tags = soup.find_all('li', class_='f19phm7j dir dir-ltr')
+    for li in li_tags:
+        if 'Registration number' in li.text:
+            extracted = li.text.replace('Registration number', '').replace(':', '').strip()
+            details['policy_number'] = extracted if extracted else "Pending"
+            break
+
+    #2. host type
+    host_divs = soup.find_all('div', class_='t1bchdij dir dir-ltr')
+    for div in host_divs:
+        if 'Suoerhost' in div.text:
+            details['host_type'] = "Superhost"
+            break
+
+    #3. host name
+    host_h2 = soup.find('ht', class_='h1y19v0v dir dir-ltr')
+    if host_h2:
+        details['host_name'] = host_h2.text.replace('Hosted by', '').strip()
+
+    #4. room type
+    room_h2 = soup.find('h2', class_='hpipapi dir dir-ltr')
+    if room_h2: 
+        details['room_type'] = room_h2.text.split(' in ')[0].strip()
+
+    #5. location rating
+    rating_divs = soup.find_all('div', class_='r1lutz1s dir dir-ltr')
+    for div in rating_divs:
+        if 'Location' in div.text:
+            match = re.search(r'(\d+\.d+)', div.text)
+            if match:
+                details['location_rating'] = float(match.group(1))
+            break
+
+    return details
+
     pass
     # ==============================
     # YOUR CODE ENDS HERE
