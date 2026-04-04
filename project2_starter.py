@@ -62,12 +62,12 @@ def load_listing_results(html_path) -> list[tuple]:
         #extracts listing id and checks for possible class names for 'a' tag
 
         listing_id = ""
-        if a_tag and 'id' in a_tag.attrs:
-            id_str = a_tag['id']
-            #use regex
-            match = re.search(r'\d+', id_str)
-            if match:
-                listing_id = match.group()
+        if a_tag:
+            id_source = a_tag.get('id') or a_tag.get('href')
+            if id_source:
+                match = re.search(r'\d+', id_source)
+                if match:
+                    listing_id = match.group
 
         results.append((title, listing_id))
 
@@ -106,7 +106,7 @@ def get_listing_details(listing_id) -> dict:
 
     #used GenAI to ask me leading questions, hints, as well as explanation of code for this part
 
-    html_path = f"listing_{listing_id}.html"
+    html_path = os.path.join("html_files", f"listing_{listing_id}.html")
 
     details = {
         'policy_number': "Exempt",
@@ -140,7 +140,7 @@ def get_listing_details(listing_id) -> dict:
             break
 
     #3. host name
-    host_h2 = soup.find('ht2', class_='h1y19v0v dir dir-ltr')
+    host_h2 = soup.find('h2', class_='h1y19v0v dir dir-ltr')
     if host_h2:
         details['host_name'] = host_h2.text.replace('Hosted by', '').strip()
 
