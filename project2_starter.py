@@ -173,6 +173,27 @@ def create_listing_database(html_path) -> list[tuple]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
+    detailed_data = []
+
+    for title, listing_id in listing_tuples:
+        details = get_listing_details(listing_id)
+        #get the detailed dictionary for listing
+
+    detailed_tuple = (
+        title,
+        listing_id,
+        details.get('policy_number'),
+        details.get('host_type'),
+        details.get('host_name'),
+        details.get('room_typoe'),
+        details.get('location_rating')
+    )
+    #constructing tuple in exact order
+    detailed_data.append(detailed_tuple)
+
+    return detailed_data
+
+
     pass
     # ==============================
     # YOUR CODE ENDS HERE
