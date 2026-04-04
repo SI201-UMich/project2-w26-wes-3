@@ -217,6 +217,15 @@ def output_csv(data, filename) -> None:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
+    header = [
+        "listing Title", "Listing ID", "Policy Number", "Host Type", "host Name", "Room Type", "Location Rating"
+    ]
+
+    with open(filename, 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(data)
+
     pass
     # ==============================
     # YOUR CODE ENDS HERE
@@ -261,6 +270,7 @@ def validate_policy_numbers(data) -> list[str]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
+  
     pass
     # ==============================
     # YOUR CODE ENDS HERE
