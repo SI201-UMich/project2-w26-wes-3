@@ -52,21 +52,17 @@ def load_listing_results(html_path) -> list[tuple]:
     #finds all llistings on page
 
     for listing in listings: 
-        title_tag = listing.find('div', class_='t1jojoys dir dir-ltr')
+        title_tag = listing.find('div', class_=re.compile(r't1jojoys'))
         title = title_tag.text.strip() if title_tag else ""
         #extracts listing title
 
-        a_tag = listing.find('a', class_='bn2bl2p dir dir-ltr') 
-        if not a_tag:
-            a_tag = listing.find('a', class_='l1ovpqvx c1k1n11t dir dir-ltr')
-        #extracts listing id and checks for possible class names for 'a' tag
-
-        listing_id = ""
+        a_tag = listing.find('a', href=re.compile(r'/rooms/'))
+        listing_id = ''
         if a_tag:
-            id_source = a_tag.get('id') or a_tag.get('href', "")
-            match = re.search(r'\d+', id_source)
+            href= a_tag.get('href', '')
+            match = re.search(r'/rooms/(?:plus/)?(\d+)', href)
             if match:
-                listing_id = match.group
+                listing_id = match.group(1)
         
         results.append((title, listing_id))
 
@@ -123,37 +119,59 @@ def get_listing_details(listing_id) -> dict:
         return {listing_id: details}
     
     #1. policy number
-    li_tags = soup.find_all('li', class_='f19phm7j dir dir-ltr')
-    for li in li_tags:
-        if 'Registration number' in li.text:
-            extracted = li.text.replace('Registration number', '').replace(':', '').strip()
+    for li in soup.find_all('li', class_='f19phm7j dir dir-ltr'):
+        if 'Policy number' in li.get_text():
+            span = li.find('span')
+            extracted = span.get_text().strip() if span else ''
             details['policy_number'] = extracted if extracted else "Pending"
             break
 
     #2. host type
-    host_divs = soup.find_all('div', class_='t1bchdij dir dir-ltr')
-    for div in host_divs:
-        if 'Superhost' in div.text:
-            details['host_type'] = "Superhost"
-            break
+    superhost_span = soup.find('span', class_='_1mhorg9')
+    if superhost_span and 'Superhost' in superhost_span.get_text():
+        details['host_type'] = "Superhost"
 
-    #3. host name
-    host_h2 = soup.find('h2', class_='h1y19v0v dir dir-ltr')
-    if host_h2:
-        details['host_name'] = host_h2.text.replace('Hosted by', '').strip()
+    #3. host name + room type
+    h2 = soup.find('h2', class_='_14i3z6h')
+    raw_room = ''
+    if h2:
+        text = h2.get_text()
+        parts = re.split(r'hosted by\xa0|hostedby ', text, maxsplit=1)
+        raw_room = parts[0].strip()
+        details['host_name'] = parts[1].strip() if len(parts) > 1 else ''
 
-    #4. room type
-    room_h2 = soup.find('h2', class_='hpipapi dir dir-ltr')
-    if room_h2: 
-        details['room_type'] = room_h2.text.split(' in ')[0].strip()
+    if not raw_room:
+        kh3 = soup.find('div', class_='_kh3xmo')
+        if kh3:
+            raw_room = kh3.get_text().strip()
+
+    if not details['host_name']:
+        for h2b in soup.find_all('h2', class_='hnwb2pb dir dir-ltr'):
+            txt = h2b.get_text()
+            if txt.startswith('Hosted by '):
+                details['host_name'] = txt.replace('Hosted by ', '').strip()
+
+                break
+
+    if raw_room.lower().startswith('entire'):
+        details['room_type'] = 'Entire Room'
+    elif raw_room.lower().startswith('private room'):
+        details['room_type'] = 'Private Room'
+    else:
+        details['room)_type'] = raw_room
+
 
     #5. location rating
-    rating_divs = soup.find_all('div', class_='r1lutz1s dir dir-ltr')
-    for div in rating_divs:
-        if 'Location' in div.text:
-            match = re.search(r'(\d+\.\d+)', div.text)
-            if match:
-                details['location_rating'] = float(match.group(1))
+    for d in soup.find_all('div', class_='_y1ba89'):
+        if d.get_text().strip() == 'Location':
+            parent = d.find_parent('div', class_='_a3qxec')
+
+            if parent: 
+                score_span = parent.find('span', class_='_4oybiu')
+
+                if score_span:
+                    details['location_rating'] = float(score_span.get_text())
+
             break
 
     return {listing_id: details}
@@ -299,16 +317,19 @@ def validate_policy_numbers(data) -> list[str]:
     invalid_ids = []
 
     #regex pattern: "STR-" followed by 7 digits
-    valid_pattern = r"^STR-\d{7}$"
+    valid_str_pattern = r"^STR-\d{7}$"
+    valid_year_pattern = r"^\d{4}-\d+STR$"
 
     for row in data:
         listing_id = row[1]
         policy = row[2]
 
         #checking against standard allowed strings
-        if policy not in ["Exempt", "Pending"]:
-            if not re.match(valid_pattern, policy):
-                invalid_ids.append(listing_id)
+        if policy.lower() not in ["exempt", "pending"]:
+            continue
+
+        if not re.match(valid_str_pattern, policy) and not re.match(valid_year_pattern, policy):
+            invalid_ids.append(listing_id)
 
     return invalid_ids
     pass
@@ -331,6 +352,7 @@ def google_scholar_searcher(query):
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
+    base_url = "https://"
     pass
     # ==============================
     # YOUR CODE ENDS HERE
