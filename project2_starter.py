@@ -2,13 +2,13 @@
 # Your name: Wesley Chan
 # Your student id: 78133291
 # Your email: wesleycc@umich.edu
-# Who or what you worked with on this homework (including generative AI like ChatGPT):
+# Who or what you worked with on this homework (including generative AI like ChatGPT): Gemini
 # If you worked with generative AI also add a statement for how you used it.
-# e.g.:
+# e.g.: 
 # Asked ChatGPT for hints on debugging and for suggestions on overall code structure
-#
+# I used Gen AI to come up with questions and hints that would help me figure out code structure. If I was really stuck on something, which happened a couple times during debugging, I would ask Gen AI for an explanation behind the right answer. 
 # Did your use of GenAI on this assignment align with your goals and guidelines in your Gen AI contract? If not, why?
-#
+# Yes
 # --- ARGUMENTS & EXPECTED RETURN VALUES PROVIDED --- #
 # --- SEE INSTRUCTIONS FOR FULL DETAILS ON METHOD IMPLEMENTATION --- #
 
@@ -317,18 +317,25 @@ def validate_policy_numbers(data) -> list[str]:
     invalid_ids = []
 
     #regex pattern: "STR-" followed by 7 digits
-    valid_str_pattern = r"^STR-\d{7}$"
-    valid_year_pattern = r"^\d{4}-\d+STR$"
+    valid_str_pattern = r"^STR-\d{7}$" #SF format
+    valid_year_pattern = r"^\d{4}-\d+STR$" #city format
 
     for row in data:
         listing_id = row[1]
         policy = row[2]
 
-        #checking against standard allowed strings
-        if policy.lower() not in ["exempt", "pending"]:
-            continue
+        # stripping all whitespace and invisible characters
+        policy_clean = re.sub(r'[\s ]+', '', policy).lower()
 
-        if not re.match(valid_str_pattern, policy) and not re.match(valid_year_pattern, policy):
+        #skip exempt and pending listings
+        if policy_clean in ["exempt", "pending"] or not policy_clean:
+            continue
+        
+        #strip only regular whitespace for regegx matching
+        policy_stripped = policy.strip()
+
+        #check against both valid formats
+        if not re.match(valid_str_pattern, policy_stripped) and not re.match(valid_year_pattern, policy_stripped):
             invalid_ids.append(listing_id)
 
     return invalid_ids
@@ -352,7 +359,35 @@ def google_scholar_searcher(query):
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    base_url = "https://"
+    from urllib.parse import quote_plus #encodes spaces as '+' for URL query params
+    base_url = "https://scholar.google.com/scholar"
+    url = base_url + "?q=" + quote_plus(query)
+
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Wiin54; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "chrome/120.0.0.0 Safari/537.36"
+        )
+    }
+    # gen AI helped me with headers
+
+    response = response.get(url, headers=headers, timeout=10)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    titles = []
+
+    for h3 in soup.find_all("h3", class_="gs_rt"):
+        a_tag = h3.find("a")
+        if a_tag: 
+            title = a_tag.get_text().strip()
+        else: 
+            title = h3.get_text().strip
+        if title:
+            titles.append(title)
+
+    return titles
+
     pass
     # ==============================
     # YOUR CODE ENDS HERE
